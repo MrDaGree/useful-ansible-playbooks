@@ -1,0 +1,33 @@
+- name: Backup
+  hosts: all
+  become: true
+  become_user: root
+  tasks:
+    - name: Cleanup backup dir
+      file:
+        path: /tmp/402051f4be0cc3aad33bcf3ac3d6532b/
+        state: absent
+    - name: Make backup dir
+      file:
+        path: /tmp/402051f4be0cc3aad33bcf3ac3d6532b/
+        state: directory
+    - name: Backup /etc/
+      archive:
+        path: /etc/
+        dest: /tmp/402051f4be0cc3aad33bcf3ac3d6532b/etc.tgz
+    - name: Backup /var/www
+      archive:
+        path: /var/www/
+        dest: /tmp/402051f4be0cc3aad33bcf3ac3d6532b/www.tgz
+    - name: Dump all databases to hostname.sql
+      command: mysqldump --opt -uroot --all-databases --result-file=/tmp/402051f4be0cc3aad33bcf3ac3d6532b/{{ inventory_hostname }}.sql
+      ignore_errors: yes
+    - name: Combine backups
+      archive:
+        path: /tmp/402051f4be0cc3aad33bcf3ac3d6532b/
+        dest: /tmp/backup.tgz
+    - name: Pull Backups 
+      fetch:
+        src: /tmp/backup.tgz
+        dest: "backups"
+
